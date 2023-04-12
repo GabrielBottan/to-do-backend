@@ -4,3 +4,11 @@ export type TuserDB = {
   email: string;
   password: string;
 };
+
+export type TtaskDb = {
+  id: string;
+  type: string;
+  description: string;
+  created_at: string;
+  status: number;
+};
