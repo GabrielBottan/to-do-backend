@@ -3,6 +3,7 @@ import cors from "cors";
 import { db } from "./database/knex";
 import { unwatchFile } from "fs";
 import { TuserDB, TtaskDb } from "./database/types";
+import { create } from "domain";
 
 const app = express();
 
@@ -217,6 +218,92 @@ app.post("/tasks", async (req: Request, res: Response) => {
     res
       .status(201)
       .send({ message: "Nova tarefa cadastrada", task: insertedTask });
+  } catch (error) {
+    console.log(error);
+
+    if (req.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
+  }
+});
+
+app.put("/tasks/:id", async (req: Request, res: Response) => {
+  try {
+    const idToEdit = req.params.id;
+
+    const newId = req.body.id;
+    const newTitle = req.body.title;
+    const newDescription = req.body.description;
+    const newCreatedAt = req.body.createdAt;
+    const newStatus = req.body.status;
+
+    if (newId !== undefined) {
+      if (typeof newId !== "string") {
+        res.status(400);
+        throw new Error("Id deve ser uma string");
+      }
+      if (newId.length < 3) {
+        res.status(400);
+        throw new Error("Id deve ter pelo menos 3 caracteres");
+      }
+    }
+
+    if (newTitle !== undefined) {
+      if (typeof newTitle !== "string") {
+        res.status(400);
+        throw new Error("O titulo deve ser uma string");
+      }
+      if (newTitle.length < 2) {
+        res.status(400);
+        throw new Error("O titulo deve ter pelo menos 3 caracteres");
+      }
+    }
+    if (newDescription !== undefined) {
+      if (typeof newDescription !== "string") {
+        res.status(400);
+        throw new Error(" A descrição deve ser uma string");
+      }
+    }
+    if (newCreatedAt !== undefined) {
+      if (typeof newCreatedAt !== "string") {
+        res.status(400);
+        throw new Error(" A created_at deve ser uma string");
+      }
+    }
+    if (newStatus !== undefined) {
+      if (typeof newStatus !== "number") {
+        res.status(400);
+        throw new Error(" O status deve ser um  number (0 ou 1");
+      }
+    }
+
+    const [task]: TtaskDb[] | undefined[] = await db("tasks").where({
+      id: idToEdit,
+    });
+
+    if (!task) {
+      res.status(400);
+      throw new Error("Id não encontrado");
+    }
+
+    const newTask: TtaskDb = {
+      id: newId || task.id,
+      title: newTitle || task.title,
+      description: newDescription || task.description,
+      created_at: newCreatedAt || task.created_at,
+      status: isNaN(newStatus) ? task.status : newStatus,
+    };
+    await db("tasks").update(newTask).where({ id: idToEdit });
+
+    res
+      .status(200)
+      .send({ message: "Tarefa editada com sucesso", task: newTask });
   } catch (error) {
     console.log(error);
 
