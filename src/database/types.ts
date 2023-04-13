@@ -7,7 +7,7 @@ export type TuserDB = {
 
 export type TtaskDb = {
   id: string;
-  type: string;
+  title: string;
   description: string;
   created_at: string;
   status: number;
